@@ -1,6 +1,6 @@
 # Library Docs
 
-Project-specific usage patterns for every third party library in this project. This file only covers how we use each library in this specific project — rules, patterns, and constraints specific to HiredPiolet.
+Project-specific usage patterns for every third party library in this project. This file only covers how we use each library in this specific project — rules, patterns, and constraints specific to HiredPilot.
 
 Read the relevant section before implementing any feature that touches these libraries.
 

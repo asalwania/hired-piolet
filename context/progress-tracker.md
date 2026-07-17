@@ -6,9 +6,9 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ## Current Status
 
-**Phase:**
-**Last completed:**
-**Next:**
+**Phase:** Phase 1 — Foundation
+**Last completed:** 01 Homepage
+**Next:** 02 Auth
 
 ---
 
@@ -16,7 +16,7 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ### Phase 1 — Foundation
 
-- [ ] 01 Homepage
+- [x] 01 Homepage
 - [ ] 02 Auth
 - [ ] 03 PostHog Initialization
 - [ ] 04 Database Schema
@@ -50,10 +50,13 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ## Decisions Made During Build
 
-_Add decisions here as they are made during implementation._
+- Homepage is a static Server Component until authentication is implemented in Feature 02.
+- The supplied product preview images remain presentation assets rather than recreated mock interfaces.
+- `public/logo.png` was mislabeled "JobPilot" from the original delivered assets — regenerated as an SVG-sourced PNG (`public/logo.svg` is the source) using the accent gradient icon (`#7C5CFC` → `#4A2EC5`, `ui-tokens.md` Logo spec) with the correct "HiredPilot" wordmark in Inter Bold / `text-text-darkest`. Navbar/Footer `Image` width/height updated from 496x168 to 640x168 to match the new asset's aspect ratio.
 
 ---
 
 ## Notes
 
-_Add notes here as the build progresses — workarounds, patterns, anything that differs from the context files._
+- Homepage specification: `docs/specs/0001-homepage.md`.
+- The project references `/imprint`, but no installed `.agents/skills/imprint/SKILL.md` was available. Homepage patterns were recorded directly in `context/ui-registry.md`.

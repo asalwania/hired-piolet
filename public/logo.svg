@@ -1,0 +1,18 @@
+<svg width="640" height="168" viewBox="0 0 640 168" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C5CFC"/>
+      <stop offset="100%" stop-color="#4A2EC5"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="168" height="168" rx="46" fill="url(#iconGradient)"/>
+
+  <!-- paper-plane glyph, centered in the 168x168 icon -->
+  <g transform="translate(84,84) rotate(-45) translate(-42,-42)">
+    <path d="M6 42 L78 20 L56 78 L46 52 Z" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M6 42 L46 52 L56 78 Z" fill="#FFFFFF" opacity="0.35"/>
+  </g>
+
+  <text x="192" y="118" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="92" fill="#111827" letter-spacing="-1">HiredPilot</text>
+</svg>
