@@ -28,130 +28,89 @@ Never rely on general training knowledge alone for library APIs — they change 
 
 ## InsForge
 
-**Check first:** Check AGENTS.md for an installed InsForge skill. If an InsForge MCP server is configured — use it. The skill/MCP will have the latest API patterns.
+**Required first step:** Use the configured `insforge` MCP server. Call
+`fetch-docs` with `docType: "instructions"`, then fetch the documentation for
+the feature being implemented. The durable setup and workflow are in
+`context/insforge.md`.
 
-### Client vs Server
+### Current SDK Baseline
 
-Two separate instances — never mix them:
-
-```typescript
-// lib/insforge-client.ts — browser context only
-import { createBrowserClient } from "@insforge/ssr";
-
-export const insforge = createBrowserClient(
-  process.env.NEXT_PUBLIC_INSFORGE_URL!,
-  process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-);
-```
+The live instructions specify `@insforge/sdk@latest`. The published package was
+verified as version `1.4.5` on 2026-07-17:
 
 ```typescript
-// lib/insforge-server.ts — server context only
-import { createServerClient } from "@insforge/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@insforge/sdk";
 
-export const createInsforgeServer = async () => {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-};
+export const insforge = createClient({
+  baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
+  anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
+});
 ```
 
-**Rules:**
+For Next.js SSR, use the export subpaths included in that same package:
+`@insforge/sdk/ssr` and `@insforge/sdk/ssr/middleware`. Do not install a
+separate `@insforge/ssr` package.
 
-- Browser client — Client Components, browser-side auth state, realtime subscriptions
-- Server client — Server Components, API routes, Server Actions, agent functions
-- Never use browser client in server context
-- Never use server client in browser context
+### Next.js 16 Auth and Session Contract
 
----
+InsForge's MCP auth reference documents the general TypeScript auth methods,
+but its current `fetch-docs` enum does not yet expose the newly advertised
+`auth-components-nextjs` document. The official published SDK contract fills
+that gap and is authoritative for Feature 02.
 
-### Auth
+- SSR auth mutations run on the server through `createAuthActions()` so access
+  and refresh tokens are never returned to Client Components.
+- `createBrowserClient()` only consumes an existing SSR session. Its type does
+  not expose sign-in, sign-up, or sign-out mutations.
+- `createServerClient({ cookies: await cookies() })` is the Server Component and
+  server-side data-access client.
+- The default cookies are `insforge_access_token` and the HTTP-only
+  `insforge_refresh_token`.
+- The refresh endpoint is created with `createRefreshAuthRouter()` at
+  `app/api/auth/refresh/route.ts`.
+- Next.js 16 uses `proxy.ts`, not `middleware.ts`. Import `updateSession` from
+  `@insforge/sdk/ssr/middleware` and copy refreshed cookies onto the response
+  before Server Components render.
 
-```typescript
-// Get current user in server context
-const insforge = await createInsforgeServer();
-const {
-  data: { user },
-  error,
-} = await insforge.auth.getUser();
-if (!user) redirect("/login");
-```
+OAuth for Google and GitHub must start and finish on the server:
 
----
+1. A Server Action calls `createAuthActions({ cookies })` and then
+   `signInWithOAuth(provider, { redirectTo, skipBrowserRedirect: true })`.
+2. `redirectTo` is the absolute application URL for `/api/auth/callback`.
+3. Store the returned `codeVerifier` in an HTTP-only, secure-in-production,
+   `sameSite: "lax"` cookie named `insforge_code_verifier` with a 10-minute
+   lifetime, then redirect to the returned provider URL.
+4. The callback Route Handler reads `insforge_code` and the verifier cookie,
+   constructs `createAuthActions({ requestCookies, responseCookies })`, calls
+   `exchangeOAuthCode(code, verifier)`, deletes the verifier cookie, and
+   redirects to `/dashboard`.
 
-### DB Queries
+SSR browser clients do not exchange OAuth callbacks automatically. The simpler
+browser-only `signInWithOAuth()` flow in the general auth reference must not be
+used for HiredPilot's SSR session.
 
-```typescript
-// Read
-const { data, error } = await insforge
-  .from("jobs")
-  .select("*")
-  .eq("user_id", user.id)
-  .order("found_at", { ascending: false });
+`updateSession()` is documented as a refresh helper, not as an authorization
+decision. Feature 02 must still verify the current user at the protected server
+boundary before rendering `/dashboard`, `/profile`, or `/find-jobs`; a
+successful refresh call alone must not be treated as proof of authentication.
 
-// Insert
-const { data, error } = await insforge
-  .from("jobs")
-  .insert({ user_id: user.id, title, company, match_score })
-  .select()
-  .single();
+### Project Rules
 
-// Update
-const { error } = await insforge
-  .from("jobs")
-  .update({ company_research: dossier })
-  .eq("id", jobId)
-  .eq("user_id", user.id); // always scope to user
-```
-
-**Rules:**
-
-- Always scope queries to `user_id` — never query without user filter
-- Always handle the `error` return — never assume success
-- Use `.single()` when expecting exactly one row
-
----
-
-### Storage
-
-```typescript
-// Upload file
-const { data, error } = await insforge.storage
-  .from("resumes")
-  .upload(`${userId}/resume.pdf`, fileBuffer, {
-    contentType: "application/pdf",
-    upsert: true, // overwrites existing file
-  });
-
-// Get public URL
-const { data } = insforge.storage
-  .from("resumes")
-  .getPublicUrl(`${userId}/resume.pdf`);
-
-const url = data.publicUrl;
-```
-
-**Storage paths:**
-
-- Base resume: `resumes/{user_id}/resume.pdf`
-
-**Rules:**
-
-- Always use `upsert: true` for base resume uploads — overwrites existing file
-- Always save the public URL back to the DB after upload
-- Never write files to disk — always upload buffer directly to storage
+- SDK calls are for application runtime behavior; MCP tools are for development
+  infrastructure and deployment.
+- Every SDK operation handles its `{ data, error }` result.
+- Database inserts use array form: `[{ ... }]`, even for one row, unless newer
+  feature docs explicitly replace that contract.
+- Every user-owned database query is scoped to the authenticated `user_id`.
+- Resume storage remains `resumes/{user_id}/resume.pdf`; save the resulting URL
+  to the profile record.
+- Never expose the MCP management key or any server-only provider key to browser
+  code.
+- Serverless functions use one endpoint and do not use nested route paths.
+- Do not copy SDK methods from Supabase examples. Use only methods returned by
+  current InsForge documentation.
+- HiredPilot remains on Tailwind CSS v4. The generic InsForge template guidance
+  for Tailwind 3.4 does not authorize a downgrade.
 
 ---
 

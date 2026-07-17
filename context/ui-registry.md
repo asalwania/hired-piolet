@@ -18,6 +18,9 @@ After building any component — update this file with the component name, file 
 
 ## Components
 
+No UI components were added or changed by the InsForge MCP setup and
+documentation update. Existing component patterns remain authoritative.
+
 ### Navbar
 
 **Path:** `components/layout/Navbar.tsx`

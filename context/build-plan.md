@@ -4,6 +4,14 @@
 
 Full page UI built with mock data first — verified visually before any logic is written. Then functionality is built and wired to the UI step by step. Every feature must be visible and testable before moving to the next. No invisible backend phases.
 
+### InsForge implementation gate
+
+Before any feature adds or changes InsForge code or infrastructure, follow
+`context/insforge.md`: fetch live `instructions` plus the feature-specific MCP
+docs, then implement from the returned contract. Feature 02 must resolve and
+document the current Next.js auth/session pattern before creating client helpers
+or middleware.
+
 ---
 
 ## Phase 1 — Foundation

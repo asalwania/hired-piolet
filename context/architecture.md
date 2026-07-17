@@ -30,6 +30,7 @@
 │   ├── ui-registry.md
 │   ├── code-standards.md
 │   ├── library-docs.md
+│   ├── insforge.md
 │   ├── build-plan.md
 │   └── progress-tracker.md
 ├── app/
@@ -109,6 +110,8 @@
 ---
 
 ## System Boundaries
+
+InsForge setup and working rules live in `context/insforge.md`.
 
 | Folder        | Owns                                                                                                   |
 | ------------- | ------------------------------------------------------------------------------------------------------ |
@@ -300,40 +303,21 @@ Access: authenticated users only, own files only.
 
 ## InsForge Client Pattern
 
-Two separate InsForge instances — never mix them:
+The current official baseline is `@insforge/sdk` with `createClient()`:
 
 ```typescript
-// lib/insforge-client.ts
-// Browser-side — used in client components for auth state
-import { createBrowserClient } from "@insforge/ssr";
-export const insforge = createBrowserClient(
-  process.env.NEXT_PUBLIC_INSFORGE_URL!,
-  process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-);
+import { createClient } from "@insforge/sdk";
 
-// lib/insforge-server.ts
-// Server-side — used in API routes, Server Actions, agent code
-import { createServerClient } from "@insforge/ssr";
-import { cookies } from "next/headers";
-
-export const createInsforgeServer = async () => {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-};
+export const insforge = createClient({
+  baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
+  anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
+});
 ```
+
+The exact Next.js browser/server auth-session boundary must come from live
+InsForge auth documentation before Feature 02 is implemented. Do not implement
+the earlier proposed `@insforge/ssr` cookie helpers unless current docs
+explicitly require them. See `context/insforge.md` for the required workflow.
 
 ---
 
@@ -417,10 +401,15 @@ await stagehand.close();
 
 Rules the AI agent must never violate:
 
+- Fetch current InsForge instructions and feature documentation before changing
+  an InsForge integration.
+- Never expose an InsForge management key to browser code. Server-side writes
+  must follow the server/session pattern returned by current auth documentation.
 - API routes contain no UI logic. Components contain no DB logic.
 - Agent code in `/agent` never imports from `/components` or `/actions`.
 - Server Actions never call agent functions. Agent functions are only called from API routes.
-- All InsForge server-side writes use `createInsforgeServer()` — never the browser client.
+- InsForge server-side writes use the server/session pattern returned by current
+  auth documentation — never a browser-only client or management key.
 - No hardcoded hex values or raw Tailwind color classes in components — use CSS variables from ui-tokens.md.
 - Every Stagehand action is wrapped in try/catch. Failures are logged to agent_logs, never thrown to crash the run.
 - Company research always returns a dossier — even if browser research fails, GPT-4o synthesizes from company name and job description alone. Never return empty.

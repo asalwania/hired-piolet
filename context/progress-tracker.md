@@ -14,6 +14,11 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ## Progress
 
+### Project Setup and Documentation
+
+- [x] InsForge MCP registered and live setup instructions captured in
+  `context/insforge.md`
+
 ### Phase 1 — Foundation
 
 - [x] 01 Homepage
@@ -49,6 +54,12 @@ Update this file after every completed feature. Any AI agent reading this should
 ---
 
 ## Decisions Made During Build
+
+- InsForge integration begins with live MCP documentation. The current SDK
+  baseline is `@insforge/sdk`; the earlier unverified `@insforge/ssr` proposal is
+  not to be implemented unless current Auth docs require it.
+- HiredPilot remains on Tailwind CSS v4. InsForge's generic Tailwind 3.4 template
+  guidance does not authorize a project-wide downgrade.
 
 - Homepage is a static Server Component until authentication is implemented in Feature 02.
 - The supplied product preview images remain presentation assets rather than recreated mock interfaces.

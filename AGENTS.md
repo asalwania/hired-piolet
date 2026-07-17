@@ -17,8 +17,9 @@ Read in this exact order before any implementation:
 5. context/ui-registry.md
 6. context/code-standards.md
 7. context/library-docs.md
-8. context/build-plan.md
-9. context/progress-tracker.md
+8. context/insforge.md
+9. context/build-plan.md
+10. context/progress-tracker.md
 
 ## Rules That Never Change
 
@@ -28,6 +29,10 @@ Read in this exact order before any implementation:
   then read `context/library-docs.md` for project-specific rules
 - If the same problem persists after one corrective prompt —
   stop immediately and run /recover
+
+- Before any InsForge implementation, call InsForge MCP `fetch-docs` for
+  `instructions` and the feature-specific documentation, then read
+  `context/insforge.md`
 
 ## Available Skills
 

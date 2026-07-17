@@ -192,19 +192,19 @@ export async function discoverJobs(
 
 ## InsForge Client Usage
 
-```typescript
-// Browser context — Client Components only
-import { insforge } from "@/lib/insforge-client";
+Current rules from live InsForge instructions:
 
-// Server context — Server Components, Route Handlers, Server Actions, Agent
-import { createInsforgeServer } from "@/lib/insforge-server";
-const insforge = await createInsforgeServer();
-```
+- Call InsForge MCP `fetch-docs` for `instructions` and the relevant feature
+  before writing integration code
+- Use `@insforge/sdk`; do not assume `@insforge/ssr` APIs exist
+- Establish browser/server session behavior from current auth documentation
+- Never expose management or server-only keys to browser code
+- Always handle the SDK `{ data, error }` result
+- Use array form for inserts: `[{ ... }]`
+- Always scope every query to the current `user_id`
 
-- Never use the browser client in server context
-- Never use the server client in browser context
-- Always await createInsforgeServer() — it reads cookies asynchronously
-- Always scope every query to the current user_id — never query without a user filter
+Before implementing Auth, replace this section's boundary guidance with the
+exact Next.js session pattern returned by the live InsForge auth documentation.
 
 ---
 
@@ -305,7 +305,7 @@ Never install a new package without a clear reason. Before installing anything c
 
 Approved dependencies for this project:
 
-- `@insforge/ssr` — InsForge client
+- `@insforge/sdk` — current InsForge application client
 - `@browserbasehq/sdk` — Browserbase sessions
 - `@browserbasehq/stagehand` — AI browser control
 - `openai` — GPT-4o API
